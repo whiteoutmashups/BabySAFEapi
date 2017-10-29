@@ -1,4 +1,4 @@
-# BabySAFEapi
+# <a href="https://wgallo3.github.io/BabySAFEapi/">BabySAFEapi</a>
 EASIEST possible SAFE Network API, copy and paste various buttons THAT WORK :)<br>
 Download <a href="https://github.com/wgallo3/BabySAFEapi/blob/master/index.html">the index.html file above</a> to begin filling it in. Test it on Alpha 2 and use the <a href="http://docs.maidsafe.net/beaker-plugin-safe-app/">API docs here</a>.
 
