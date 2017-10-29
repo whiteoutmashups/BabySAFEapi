@@ -8,9 +8,40 @@
 
 <div style="float:left;margin:40px;">
 <h2>Authorize</h2>
-<input type="submit" value="AUTHORIZE" />&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<button>CHECK AUTHORIZATION</button><br><br><button>REMOVE AUTHORIZATION (Logout)</button><br><br>
+<input type="submit" value="AUTHORIZE" onclick="auth()" />&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<button>CHECK AUTHORIZATION</button><br><br><button>REMOVE AUTHORIZATION (Logout)</button><br><br>
+<b>Authorization Status Appears Here</b>
 <script>
-
+function auth() {
+  window.safeApp.initialise({
+        id: 'will',
+        name: 'WebApp Test',
+        vendor: 'MaidSafe Ltd.'
+     }, (newState) => {
+        console.log("Network state changed to: ", newState);
+     })
+     .then((appHandle) => {
+        console.log('SAFEApp instance initialised and handle returned: ', appHandle);
+     });
+  window.safeApp.initialise({
+      id: 'will',
+      name: 'WebApp Test',
+      vendor: 'MaidSafe Ltd.'
+   })
+   .then((appHandle) => window.safeApp.connect(appHandle))
+   .then(_ => {
+      console.log('Unregistered session created');
+   });
+   window.safeApp.authorise(
+      appHandle, // the app handle obtained when invoking `initialise`
+      {
+        _public: ['Insert'], // request to insert into `_public` container
+        _other: ['Insert', 'Update'] // request to insert and update in `_other` container
+      },
+      {own_container: true} // and we want our own container, too
+   ).then((authUri) => {
+      console.log('App was authorised and auth URI received: ', authUri);
+   }); // THIS IS WHERE THE ERRORS BEGIN!!! SAYS "APPHANDLE NOT DEFINED" EVEN THOUGH YOU CAN SEE IT PLAINLY DEFINED RIGHT ABOVE IN "INITIALIZE"
+}
 </script>
 </div>
 
@@ -20,18 +51,25 @@
 <input type="file" /><br><br><button>UPLOAD FILE</button><br><br>
 <h3>Upload Private File</h3>
 <input type="file" /><br><br><button>UPLOAD FILE</button><br><br>
+<h3>Upload Text String</h3>
+<input type="text" value="Enter String..." size="11" /><br><br><button>UPLOAD TEXT STRING</button><br><br>
 </div>
 
 <div style="float:left;margin:40px;">
 <h2>Display Uploaded Files</h2>
-Displays <b>Images, Video, Audio, & maybe Documents?</b><br><br>
+Displays <b>Images, Video, Audio,<br> Text Strings, & maybe Documents?</b><br><br>
 <button>Click to Display Files</button><br>
 </div>
 
 <div style="float:left;margin:40px;">
 <h2>Messages (Text)</h2>
-<input type="text" placeholder="Enter Message" /> <input type="submit" value="Send Message" /><br><br>
-<b>MESSAGES SHOW UP HERE</b>
+
+<h3>Private Message</h3>
+<input type="text" placeholder="Enter Message..." size="13" /> <input type="text" placeholder="Enter Recipient's ID..." size="17" /> <input type="submit" value="Send Message" /><br><br>
+<b>RECEIVED MESSAGES SHOW UP HERE</b><br><br>
+<h3>General, public chatroom message</h3>
+<input type="text" placeholder="Enter Message..." size="13" /> <input type="submit" value="Send Message" /><br><br>
+<b>ALL PUBLIC MESSAGES SHOW UP HERE</b>
 </div>
 
 
