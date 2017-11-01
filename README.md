@@ -13,3 +13,5 @@ The goal of this project is to make the #1 EASIEST API for the SAFE Network, so 
 
 **Paying $400 of my personal savings to get this done for the community.**
 Can pay in crypto if needed.
+
+# Additional <a href="https://github.com/PuchongOffice/JS-Job-1">info & tutorial here</a>
