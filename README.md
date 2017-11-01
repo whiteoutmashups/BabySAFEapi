@@ -15,3 +15,5 @@ The goal of this project is to make the #1 EASIEST API for the SAFE Network, so 
 Can pay in crypto if needed.
 
 # Additional <a href="https://github.com/PuchongOffice/JS-Job-1">info & tutorial here</a>
+
+**More resources that can help: Online version of the Browser for live testing -- and Online version of uploader for live testing -- This website on the live network lets you do lots of tests: <a href="safe://webapi.playground/">safe://webapi.playground/</a> -- Test of <a href="https://github.com/loziniak/maidsafe-test/tree/7f3d88274044280180566b1cc53ddd296d6fb0f6">easier API wrapper</a> -- Test of <a href="https://github.com/MoinhoDigital/websafe">easier NodeJS API wrapper</a> -- More soon**
