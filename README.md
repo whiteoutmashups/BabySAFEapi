@@ -6,13 +6,9 @@ Download <a href="https://github.com/wgallo3/BabySAFEapi/blob/master/index.html"
  - Make the various buttons ACTUALLY WORK :P 
  - Upload, Display files, public / private, login /out, etc
  - Separate code into < div> 's, so that it's super easy to copy parts
- - **Separate this project into sections, Upload &view part = $200, Messages = $100, NFS part = $100**
- 
+
 # Goals:
 The goal of this project is to make the #1 EASIEST API for the SAFE Network, so anyone can copy and paste WORKING BUTTONS into their projects / apps / websites. Making it as easy, organized, and divided as possible is the main goal, so that people can just copy exactly what they need to make simple apps / websites on SAFE.
-
-**Paying $400 of my personal savings to get this done for the community.**
-Can pay in crypto if needed.
 
 # Additional <a href="https://github.com/PuchongOffice/JS-Job-1">info & tutorial here</a>
 
