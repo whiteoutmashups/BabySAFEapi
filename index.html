@@ -1,91 +1,54 @@
-<html>
-<head><title>BabySAFE API</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Test #1</title>
+  <link rel="stylesheet" href="assets/css/bootstrap.min.css">
 </head>
-
 <body>
+  <div class="container">
+    <div class="jumbotron">
+      <h1 class="display-3">Test for Authorization</h1>
+      <p class="lead">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+      <button class="btn btn-primary" onclick="auth()">Authorize</button>
+    </div>
+  </div>
+  <script src="assets/js/jquery.min.js"></script>
+  <script src="assets/js/bootstrap.min.js"></script>
+  <script>
+    function auth() {
+      const app = {
+        id: "ronald",
+        name: "first js files for this company",
+        version: '0.0.1',
+        vendor: "Ronald"
+      };
 
-<h1>BabySAFE API</h1>
+      var permissions = {
+        _public: ['Read']
+      };
 
-<div style="float:left;margin:40px;">
-<h2>Authorize</h2>
-<input type="submit" value="AUTHORIZE" onclick="auth()" />&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<button>CHECK AUTHORIZATION</button><br><br><button>REMOVE AUTHORIZATION (Logout)</button><br><br>
-<b>Authorization Status Appears Here</b>
-<script>
-function auth() {
-  window.safeApp.initialise({
-        id: 'will',
-        name: 'WebApp Test',
-        vendor: 'MaidSafe Ltd.'
-     }, (newState) => {
-        console.log("Network state changed to: ", newState);
-     })
-     .then((appHandle) => {
-        console.log('SAFEApp instance initialised and handle returned: ', appHandle);
-     });
-  window.safeApp.initialise({
-      id: 'will',
-      name: 'WebApp Test',
-      vendor: 'MaidSafe Ltd.'
-   })
-   .then((appHandle) => window.safeApp.connect(appHandle))
-   .then(_ => {
-      console.log('Unregistered session created');
-   });
-   window.safeApp.authorise(
-      appHandle, // the app handle obtained when invoking `initialise`
-      {
-        _public: ['Insert'], // request to insert into `_public` container
-        _other: ['Insert', 'Update'] // request to insert and update in `_other` container
-      },
-      {own_container: true} // and we want our own container, too
-   ).then((authUri) => {
-      console.log('App was authorised and auth URI received: ', authUri);
-   }); // THIS IS WHERE THE ERRORS BEGIN!!! SAYS "APPHANDLE NOT DEFINED" EVEN THOUGH YOU CAN SEE IT PLAINLY DEFINED RIGHT ABOVE IN "INITIALIZE"
-}
-</script>
-</div>
-
-<div style="float:left;margin:40px;">
-<h2>Uploading Files</h2>
-<h3>Upload Public File</h3>
-<input type="file" /><br><br><button>UPLOAD FILE</button><br><br>
-<h3>Upload Private File</h3>
-<input type="file" /><br><br><button>UPLOAD FILE</button><br><br>
-<h3>Upload Text String</h3>
-<input type="text" value="Enter String..." size="11" /><br><br><button>UPLOAD TEXT STRING</button><br><br>
-</div>
-
-<div style="float:left;margin:40px;">
-<h2>Display Uploaded Files</h2>
-Displays <b>Images, Video, Audio,<br> Text Strings, & maybe Documents?</b><br><br>
-<button>Click to Display Files</button><br>
-</div>
-
-<div style="float:left;margin:40px;">
-<h2>Messages (Text)</h2>
-
-<h3>Private Message</h3>
-<input type="text" placeholder="Enter Message..." size="13" /> <input type="text" placeholder="Enter Recipient's ID..." size="17" /> <input type="submit" value="Send Message" /><br><br>
-<b>RECEIVED MESSAGES SHOW UP HERE</b><br><br>
-<h3>General, public chatroom message</h3>
-<input type="text" placeholder="Enter Message..." size="13" /> <input type="submit" value="Send Message" /><br><br>
-<b>ALL PUBLIC MESSAGES SHOW UP HERE</b>
-</div>
-
-
-
-<div style="float:left;margin:40px;">
-<h2>File Operations (NFS)</h2>
-<h3>Create Folder</h3>
-<input type="text" placeholder="Enter Folder Name..." /> <input type="submit" value="Create Folder" /><br><br>
-<h4>Create ID</h3>
-<input type="text" placeholder="Enter Desired ID..." /> <input type="submit" value="Claim ID" /><br><br>
-<h4>Create URL</h3>
-<input type="text" placeholder="Enter Desired URL..." /> <input type="submit" value="Map the URL..." /><br><br>
-</div>
-
-
-
-<br><br><br>
+      (function() {
+        console.log('Initialising Website');
+        window.safeApp.initialise(app)
+          .then((appInit) => {
+            console.log("Initialise Token :" + appInit);
+            console.log("Authorising website");
+            window.safeApp.authorise(appInit, permissions)
+              .then((auth) => {
+                alert(auth);
+                console.log("Success");
+              },(err) => {
+                console.error(err);
+              });
+          });
+      })
+      ((err) => {
+        console.error(err);
+      });
+    }
+  </script>
 </body>
 </html>
