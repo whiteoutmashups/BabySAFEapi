@@ -5,50 +5,169 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Test #1</title>
-  <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+  <link rel="stylesheet" href="bootstrap.min.css">
 </head>
 <body>
   <div class="container">
-    <div class="jumbotron">
-      <h1 class="display-3">Test for Authorization</h1>
-      <p class="lead">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-      <button class="btn btn-primary" onclick="auth()">Authorize</button>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="authorise box">
+          <h3>Authorize</h3>
+          <div class="button__auth mb-2">
+            <button type="button" class="btn btn-success btn-block" onclick = "authorise()">AUTHORIZE</button>
+          </div>
+          <div class="button__auth mb-2">
+            <button type="button" class="btn btn-info btn-block" onclick = "isAuthorised()">CHECK AUTHORIZATION</button>
+          </div>
+          <div class="button__auth mb-2">
+            <button type="button" class="btn btn-danger btn-block" onclick = "removeAuthorization()">REMOVE AUTHORIZATION</button>
+          </div>
+          <div id="auth-status" class="alert hide" role="alert"></div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <h3>Messages</h3>
+        <h4>General, public chatroom message</h4>
+        <formm name="" action="">
+          <div class="form-group">
+            <label for="textGeneral">Your text</label>
+            <input type="text" class="form-control" id="textarea" placeholder="Enter your message...">
+          </div>
+          <button type="submit" class="btn btn-primary" onclick="sendMessage()">Send Messages</button>
+        </form>
+        <ul id="messages"></ul>
+      </div>
     </div>
   </div>
-  <script src="assets/js/jquery.min.js"></script>
-  <script src="assets/js/bootstrap.min.js"></script>
+
+  <script src="jquery.min.js"></script>
+  <script src="bootstrap.min.js"></script>
   <script>
-    function auth() {
-      const app = {
-        id: "ronald",
-        name: "first js files for this company",
-        version: '0.0.1',
-        vendor: "Ronald"
+    var authStatusText = document.getElementById('auth-status');
+    var appHandle = null;
+    var authUri = null;
+
+    function authorise() {
+      if (appHandle) {
+        $('#auth-status').removeClass('hide').addClass('alert-primary').html('Already Authorized');
+        return;
+      }
+
+      var app = {
+        id: "will",
+        name: "WebApp Test",
+        vendor: 'MaidSafe Ltd.',
       };
 
       var permissions = {
-        _public: ['Read']
+        '_public': [
+          'Read',
+          'Insert',
+          'Update',
+          'Delete',
+          'ManagePermissions'
+        ],
+        '_publicNames': [
+          'Read',
+          'Insert',
+          'Update',
+          'Delete',
+          'ManagePermissions'
+        ]
       };
 
-      (function() {
-        console.log('Initialising Website');
-        window.safeApp.initialise(app)
-          .then((appInit) => {
-            console.log("Initialise Token :" + appInit);
-            console.log("Authorising website");
-            window.safeApp.authorise(appInit, permissions)
-              .then((auth) => {
-                alert(auth);
-                console.log("Success");
-              },(err) => {
-                console.error(err);
+      var owncontainer = {
+        own_container: true
+      };
+
+      window.safeApp.initialise(app)
+        .then((res) => {
+          appHandle = res;
+          console.log("App Token: " + res);
+
+          window.safeApp.authorise(appHandle, permissions, owncontainer)
+            .then((res) => {
+              authUri = res;
+              $('#auth-status').removeClass('hide').addClass('alert-success').html('Authorized');
+              console.log('App was authorised and auth URI received: ' + res);
+
+              window.safeApp.connectAuthorised(appHandle, authUri)
+                .then((appHandle) => {
+                  console.log('The app was authorised and a session was created with the network. App token returned: ' + appHandle);
+                  window.auth = appHandle;
+                  getMessages();
+                });
+            });
+        }, (err) => {
+          console.error(err);
+        });
+      }
+
+      function isAuthorised() {
+        if (appHandle) {
+          $('#auth-status').removeClass('hide').addClass('alert-success').html('Already Authorized');
+        }
+        else {
+          $('#auth-status').removeClass('hide').addClass('alert-danger').html('Not Authorized');
+        }
+      }
+
+      function removeAuthorization() {
+        window.safeApp.free(appHandle);
+        appHandle = null;
+        authUri = null;
+        $('#auth-status').removeClass('hide').addClass('alert-danger').html('Authorization Removed');
+        return;
+      }
+
+      function getMessages() {
+        var name = 'BabySAFEapi';
+        document.getElementById('messages').innerHTML = '';
+        window.safeCrypto
+          .sha3Hash(auth, name)
+          .then(hash => window.safeMutableData.newPublic(auth, hash, 04112017))
+          .then(mdHandle => {
+            window.safeMutableData.getEntries(mdHandle).then(
+              entriesHandle => {
+                window.safeMutableDataEntries.forEach(entriesHandle, (key, value) => {
+                  var el = document.getElementById('messages');
+                  var elChild = document.createElement('li');
+                  elChild.innerHTML = value.buf.toString();
+                  el.appendChild(elChild);
+                });
+                window.safeMutableDataEntries.free(entriesHandle);
+                window.safeMutableData.free(mdHandle);
+              }, (err) => {
+                console.log('modar');
+                // console.error(err);
               });
           });
-      })
-      ((err) => {
-        console.error(err);
-      });
-    }
+      }
+
+      function sendMessage() {
+        var name = 'BabySAFEapi';
+        window.safeCrypto
+          .sha3Hash(auth, name)
+          .then(hash => window.safeMutableData.newPublic(auth, hash, 04112017))
+          .then(mdHandle => {
+            window.safeMutableData.newMutation(auth).then(mutationHandle => {
+              var time = new Date().getTime();
+              window.safeMutableDataMutation
+                .insert(mutationHandle, time.toString(), textarea.value)
+                .then(_ => window.safeMutableData.applyEntriesMutation(mdHandle, mutationHandle))
+                .then(_ => {
+                  window.safeMutableDataMutation.free(mutationHandle);
+                  window.safeMutableData.free(mdHandle);
+                  // getMessages();
+                });
+              console.log(name);
+              console.log(auth);
+              console.log(textarea.value);
+              console.log(time);
+              // textarea.value = '';
+            });
+          });
+      }
   </script>
 </body>
 </html>
