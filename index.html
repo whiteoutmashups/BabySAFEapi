@@ -14,28 +14,26 @@
         <div class="apps-box">
           <h3>Authorize</h3>
           <div class="button__auth mb-2">
-            <button type="button" class="btn btn-success btn-block" onclick="auth()">AUTHORIZE</button>
+            <button id="authorise" type="button" class="btn btn-success btn-block">Authorise</button>
           </div>
           <div class="button__auth mb-2">
-            <button type="button" class="btn btn-info btn-block" onclick="isAuthorised()">CHECK AUTHORIZATION</button>
+            <button id="istokenvalid" type="button" class="btn btn-info btn-block">Check authentication</button>
           </div>
           <div class="button__auth mb-2">
-            <button type="button" class="btn btn-danger btn-block" onclick="removeAuthorization()">REMOVE AUTHORIZATION</button>
+            <button id="freetoken" type="button" class="btn btn-danger btn-block">Remove token</button>
           </div>
-          <div id="auth-status" class="alert hide" role="alert"></div>
+          <div id="authorise-status" class="alert hide" role="alert"></div>
         </div>
       </div>
       <div class="col-md-6">
         <div class="apps-box">
           <h3>Messages</h3>
           <h4>General, public chatroom message</h4>
-          <form name="" action="">
-            <div class="form-group">
-              <label for="textGeneral">Your text</label>
-              <input type="text" class="form-control" id="textarea" placeholder="Enter your message...">
-            </div>
+          <div class="form-group">
+            <label for="textGeneral">Your text</label>
+            <input type="text" class="form-control" id="textarea" placeholder="Enter your message...">
             <button class="btn btn-primary" onclick="sendMessage()">Send Messages</button>
-          </form>
+          </div>
           <ul id="messages"></ul>
         </div>
       </div>
@@ -45,253 +43,17 @@
         <div class="apps-box">
           <h3>Upload Files</h3>
           <h4>Upload Public Files</h4>
-          <form action="" name="">
-            <div class="form-group">
-              <input type="file" id="uploadfile" class="form-control" name="uploadfile" formenctype="multipart/form-data"/>
-              <button onclick="uploadFile()">Upload File</button>
-            </div>
-          </form>
-        </div>
-      </div>
-      <div class="col-md-12">
-        <div class="apps-box">
-          <table id="tblFiles" class="table">
-          <thead>
-              <th>#</th>
-              <th>File Name</th>
-              <th>File Type</th>
-              <th>Action</th>
-            </thead>
-            <tbody>
-            </tbody>
-          </table>
-          <div id = "div-files"></div>
+          <div class="form-group">
+            <input id="file" type="file" class="form-control-file" name="safetest" formenctype="multipart/form-data" accept="file_extension">
+            <button id="uploadfile" class="btn btn-primary">Upload File</button>
+          </div>
+          <div id="fileshow" class="row fileshow"></div>
         </div>
       </div>
     </div>
   </div>
 
   <script src="jquery.min.js"></script>
-  <!-- <script src="auth.js"></script> -->
-  <!-- <script src="file.js"></script> -->
-
-<script type="text/javascript">
-var authorisedAppToken = null;
-var authUri = null;
-
-function auth() {
-
-  var appInfo = {
-    id: "ronald",
-    name: "BabbySAFEapi",
-    vendor: 'SAFE'
-  };
-
-  var permissions = {
-    '_public': [
-      'Read',
-      'Insert',
-      'Update',
-      'Delete',
-      'ManagePermissions'
-    ],
-    '_publicNames': [
-      'Read',
-      'Insert',
-      'Update',
-      'Delete',
-      'ManagePermissions'
-    ]
-  };
-
-  var owncontainer = {
-    own_container: true
-  };
-
-  if (authorisedAppToken) {
-    $('#auth-status').removeClass('hide').addClass('alert-primary').html('Already Authorized');
-    return;
-  }
-
-  window.safeApp.initialise(appInfo)
-    .then((appToken) => {
-      window.safeApp.authorise(appToken, permissions, owncontainer)
-        .then((auth) => {
-          window.safeApp.connectAuthorised(appToken, auth)
-            .then((authorisedAppToken) => {
-              window.auth = authorisedAppToken;
-              viewFiles();
-            });
-        });
-    }, (err) => {
-      console.error(err);
-      alert(err);
-    });
-}
-
-function isAuthorised() {
-  if (authorisedAppToken) {
-    $('#auth-status').removeClass('hide alert-danger').addClass('alert-success').html('Already Authorized');
-  }
-  else {
-    $('#auth-status').removeClass('hide alert-success').addClass('alert-danger').html('Not Authorized');
-  }
-}
-
-function removeAuthorization() {
-  window.safeApp.free(authorisedAppToken);
-  authorisedAppToken = null;
-  authUri = null;
-  $('#auth-status').removeClass('hide alert-success').addClass('alert-danger').html('Authorization Removed');
-  return;
-}
-
-
-function uploadFile(){
-  var Container = "apps/ronald";
-  var file = document.getElementById("uploadfile");
-  var reader = new FileReader();
-  var content = null;
-  reader.readAsArrayBuffer(new Blob([file.files[0]]));
-  reader.onload = function(event) {
-    var arrayBuffer = reader.result;
-    content = new Uint8Array(arrayBuffer);
-    return content;
-  };
-
-  window.safeApp
-    .getContainer(auth, Container)
-      .then((mdHandle) => {
-        window.safeMutableData.newMutation(auth)
-          .then((mutationHandle) =>
-            window.safeMutableDataMutation.insert(mutationHandle, file.files[0].name, content)
-              .then(() =>
-                window.safeMutableData.applyEntriesMutation(mdHandle, mutationHandle)
-              )
-              .then(() =>
-                console.log('New entry was inserted in the MutableData and committed to the network')
-              )
-          );
-          viewFiles();
-      },
-      (err) => {
-        console.error(err);
-      });
-}
-
-function viewFiles(){
-  var Container = "apps/ronald";
-  var inc = 1;
-  window.safeApp.getContainer(auth, Container)
-    .then((mdHandle) => {
-      console.log(mdHandle);
-      var tableRef = document.getElementById("tblFiles").getElementsByTagName("tbody")[0];
-
-      for (var incRow = 0; incRow < tableRef.rows.length; incRow++) {
-        tableRef.deleteRow(incRow);
-      }
-
-      window.safeMutableData.getEntries(mdHandle)
-        .then((entriesHandle) => {
-          window.safeMutableDataEntries.forEach(entriesHandle,
-            (key, value) => {
-
-              console.log('File found: ', new TextDecoder("utf-8").decode(key));
-
-              var row = tableRef.insertRow(tableRef.rows.length);
-              var cell1 = row.insertCell(0);
-              var cell2 = row.insertCell(1);
-              var cell3 = row.insertCell(2);
-              var cell4 = row.insertCell(3);
-
-              cell1.innerHTML = inc;
-              cell2.innerHTML = (new TextDecoder("utf-8").decode(key));
-              cell3.innerHTML = (new TextDecoder("utf-8").decode(key)).split('.').pop();
-
-              var htmlContent = "";
-
-              switch((new TextDecoder("utf-8").decode(key)).split('.').pop())
-              {
-                //Text Format
-                case "txt":
-                case "html":
-                case "htm":
-                case "css":
-                case "js":
-                case "json":
-                case "md":
-                case "odt":
-                case "rtf":
-                case "csv":
-                  htmlContent = "<textarea id='tarControl'>" + (new TextDecoder("utf-8").decode(value.buf)) + "</textarea>";
-                  cell4.innerHTML = htmlContent;
-                break;
-
-                //Image Format
-                case "jpg":
-                case "jpeg":
-                case "png":
-                case "gif":
-                case "tiff":
-                case "tif":
-                case "ico":
-                case "webp":
-                case "svg":
-                case "bmp":
-                  htmlContent = "<img id='imgControl' src='data:image/"  + (new TextDecoder("utf-8").decode(key)).split('.').pop() + ";base64," + arrayBufferToBase64(value.buf) + "'/>";
-                  cell4.innerHTML = htmlContent;
-                break;
-
-                //Audio Format
-                case "mp3":
-                case "oga":
-                case "wav":
-                  htmlContent = "<audio controls src='data:audio/" + (new TextDecoder("utf-8").decode(key)).split('.').pop() + ";base64," +  arrayBufferToBase64(value.buf) + "' type='audio/" + (new TextDecoder("utf-8").decode(key)).split('.').pop() + "'></audio>";
-                  cell4.innerHTML = htmlContent;
-                break;
-
-                //Video Format
-                case "mp4":
-                case "ogv":
-                case "ogg":
-                case "webm":
-                  htmlContent = "<video class='video-js' controls> <source src='data:video/" + (new TextDecoder("utf-8").decode(key)).split('.').pop() + ";base64," +  arrayBufferToBase64(value.buf) + "' type='video/" + (new TextDecoder("utf-8").decode(key)).split('.').pop() + "'></video>";
-                  cell4.innerHTML = htmlContent;
-                break;
-              }
-              inc++;
-            });
-          });
-    },
-    (err) => {
-      console.err(err);
-    });
-}
-
-function arrayBufferToBase64(buffer) {
-  var binary = '';
-  var bytes = new Uint8Array(buffer);
-  var len = bytes.byteLength;
-  for (var inc = 0; inc < len; inc++){
-    binary += String.fromCharCode(bytes[inc]);
-  }
-  return window.btoa(binary);
-}
-
-function base64ToArrayBuffer(base64){
-  var binary_string = window.atob(base64);
-  var len = binary_string.length;
-  var bytes = new Uint8Array(len);
-  for(var inc = 0; inc < len; inc++){
-    bytes[inc] = binary_string.charCodeAt[inc];
-  }
-  return bytes.buffer;
-}
-
-function viewContent(htmlString){
-  document.getElementById("divFileView").innerHTML = htmlString;
-}
-
-</script>
+  <script src="application.js"></script>
 </body>
 </html>
