@@ -21,6 +21,13 @@ window.document.getElementById("freetoken").addEventListener("click", function()
 window.document.getElementById("uploadfile").addEventListener("click", function() {
   uploadfile();
 });
+window.document.getElementById("uploadtext").addEventListener("click", function() {
+  uploadtext();
+});
+
+window.document.getElementById("showfile").addEventListener("click", function() {
+  viewFiles();
+});
 
 //initialises and authorises with the network
 function authorise() {
@@ -35,14 +42,6 @@ function authorise() {
     '_public': [
       'Read',
       'Insert',
-      'Update',
-      'Delete',
-      'ManagePermissions'
-    ],
-    '_publicNames': [
-      'Read',
-      'Insert',
-      'Update',
       'Delete',
       'ManagePermissions'
     ]
@@ -54,47 +53,41 @@ function authorise() {
 
   // Initialise applications
   window.safeApp.initialise(app)
-  .then((appToken) => {
-    console.log("Initialise Token: " + appToken);
-    // Ask for app authorization and permissions
-    window.safeApp.authorise(appToken, permissions, owncontainer)
-    .then((auth) => {
-      console.log(auth);
-      // Connect app to the network
-      window.safeApp.connectAuthorised(appToken, auth)
-      .then((authorisedAppToken) => {
-        window.auth = authorisedAppToken;
-        console.log('Authorised App Token: ' + authorisedAppToken);
-         $('#authorise-status').html('Authorised');
-        viewFiles();
-      });
+    .then((appToken) => window.safeApp.authorise(appToken, permissions, owncontainer)
+      .then((auth) => {
+        // Connect app to the network
+        window.safeApp.connectAuthorised(appToken, auth)
+          .then((authorisedAppToken) => {
+            window.auth = authorisedAppToken;
+             $('#authorise-status').html('Authorised');
+          });
+      })
+    )
+    .catch((err) => {
+      $('#authorise-status').html('Not Authorised');
+      console.error('Error from webapp: ', err);
     });
-  }, (err) => {
-    $('#authorise-status').html('Not Authorised');
-    console.error(err);
-  });
 }
 
 //checks network and token status
 function istokenvalid() {
   window.safeApp.isRegistered(auth)
-  .then((registered) => {
-    if (registered == true) {
-       $('#authorise-status').html('Already Authorised');
-    } else {
-      $('#authorise-status').html('Not Authorised');
-    }
-  })
+    .then((registered) => {
+      if (registered == true) {
+         $('#authorise-status').html('Already Authorised');
+      } else {
+        $('#authorise-status').html('Not Authorised');
+      }
+    });
 
   window.safeApp.networkState(auth)
-  .then((state) => console.log('Current network state: ', state));
+    .then((state) => console.log('Current network state: ', state));
 }
 
 //frees safe instance from memory
 function freetoken() {
   window.safeApp.free(auth);
-  $('#authorise-status').html('Not Authorised');
-  console.log('Token freed');
+  $('#authorise-status').html('Authorised Was Removed');
   location.reload();
 }
 
@@ -113,93 +106,122 @@ function uploadfile() {
   };
 
   window.safeApp.getContainer(auth, Container)
-  .then((mdHandle) => {
-    window.safeMutableData.newMutation(auth)
-    .then((mutationHandle) =>
-      window.safeMutableDataMutation.insert(mutationHandle, file.files[0].name, content)
-      .then(() =>
-        window.safeMutableData.applyEntriesMutation(mdHandle, mutationHandle))
-      .then(() => {
-        console.log('New entry was inserted in the MutableData and committed to the network');
-        $('#fileshow').empty();
-        viewFiles();
-      })
-    );
-  }, (err) => {
-    console.error(err);
-  });
+    .then((mdHandle) => window.safeMutableData.newMutation(auth)
+        .then((mutationHandle) =>
+          window.safeMutableDataMutation.insert(mutationHandle, file.files[0].name, content)
+          .then(() =>
+            window.safeMutableData.applyEntriesMutation(mdHandle, mutationHandle))
+          .then(() => {
+            console.log('New entry was inserted in the MutableData and committed to the network');
+            $('#fileshow').empty();
+            viewFiles();
+          })
+        )
+    )
+    .catch((err) => {
+      console.error(err);
+    });
+}
+
+//upload text into network
+function uploadtext() {
+  var file = document.getElementById("text");
+  var reader = new FileReader();
+  var content = null;
+
+  reader.readAsArrayBuffer(new Blob([file.files[0]]));
+
+  reader.onload = function(event) {
+    var arrayBuffer = reader.result;
+    content = new Uint8Array(arrayBuffer);
+    return content;
+  };
+
+  window.safeApp.getContainer(auth, Container)
+    .then((mdHandle) => window.safeMutableData.newMutation(auth)
+        .then((mutationHandle) =>
+          window.safeMutableDataMutation.insert(mutationHandle, file.files[0].name, content)
+          .then(() =>
+            window.safeMutableData.applyEntriesMutation(mdHandle, mutationHandle))
+          .then(() => {
+            console.log('New entry was inserted in the MutableData and committed to the network');
+            $('#fileshow').empty();
+            viewFiles();
+          })
+        )
+    )
+    .catch((err) => {
+      console.error(err);
+    });
 }
 
 function viewFiles() {
   var inc = 0;
   window.safeApp.getContainer(auth, Container)
-  .then((mdHandle) => {
+    .then((mdHandle) => window.safeMutableData.getEntries(mdHandle)
+      .then((entriesHandle) => window.safeMutableDataEntries.forEach(entriesHandle, (key, value) => {
 
-    window.safeMutableData.getEntries(mdHandle)
-    .then((entriesHandle) => {
-      window.safeMutableDataEntries.forEach(entriesHandle, (key, value) => {
+          var htmlContent = "";
 
-        var htmlContent = "";
+          switch((new TextDecoder("utf-8").decode(key)).split('.').pop())
+          {
+            //Text Format
+            case "txt":
+            case "html":
+            case "htm":
+            case "css":
+            case "js":
+            case "json":
+            case "md":
+            case "odt":
+            case "rtf":
+            case "csv":
+              htmlContent = "<textarea id='tarControl'>" + (new TextDecoder("utf-8").decode(value.buf)) + "</textarea><p>";
+              break;
 
-        switch((new TextDecoder("utf-8").decode(key)).split('.').pop())
-        {
-          //Text Format
-          case "txt":
-          case "html":
-          case "htm":
-          case "css":
-          case "js":
-          case "json":
-          case "md":
-          case "odt":
-          case "rtf":
-          case "csv":
-            htmlContent = "<textarea id='tarControl'>" + (new TextDecoder("utf-8").decode(value.buf)) + "</textarea><p>";
-          break;
+            //Image Format
+            case "jpg":
+            case "jpeg":
+            case "png":
+            case "gif":
+            case "tiff":
+            case "tif":
+            case "ico":
+            case "webp":
+            case "svg":
+            case "bmp":
+              htmlContent = "<img class='img-fluid img-thumbnail' id='imgControl' src='data:image/"  + (new TextDecoder("utf-8").decode(key)).split('.').pop() + ";base64," + arrayBufferToBase64(value.buf) + "'/>";
+              break;
 
-          //Image Format
-          case "jpg":
-          case "jpeg":
-          case "png":
-          case "gif":
-          case "tiff":
-          case "tif":
-          case "ico":
-          case "webp":
-          case "svg":
-          case "bmp":
-            htmlContent = "<img class='img-fluid img-thumbnail' id='imgControl' src='data:image/"  + (new TextDecoder("utf-8").decode(key)).split('.').pop() + ";base64," + arrayBufferToBase64(value.buf) + "'/>";
-          break;
+            //Audio Format
+            case "mp3":
+            case "oga":
+            case "wav":
+              htmlContent = "<audio controls src='data:audio/" + (new TextDecoder("utf-8").decode(key)).split('.').pop() + ";base64," +  arrayBufferToBase64(value.buf) + "' type='audio/" + (new TextDecoder("utf-8").decode(key)).split('.').pop() + "'></audio>";
+              break;
 
-          //Audio Format
-          case "mp3":
-          case "oga":
-          case "wav":
-            htmlContent = "<audio controls src='data:audio/" + (new TextDecoder("utf-8").decode(key)).split('.').pop() + ";base64," +  arrayBufferToBase64(value.buf) + "' type='audio/" + (new TextDecoder("utf-8").decode(key)).split('.').pop() + "'></audio>";
-          break;
+            //Video Format
+            case "mp4":
+            case "ogv":
+            case "ogg":
+            case "webm":
+              htmlContent = "<video class='video-js' controls> <source src='data:video/" + (new TextDecoder("utf-8").decode(key)).split('.').pop() + ";base64," +  arrayBufferToBase64(value.buf) + "' type='video/" + (new TextDecoder("utf-8").decode(key)).split('.').pop() + "'></video>";
+              break;
+          }
+          inc++;
 
-          //Video Format
-          case "mp4":
-          case "ogv":
-          case "ogg":
-          case "webm":
-            htmlContent = "<video class='video-js' controls> <source src='data:video/" + (new TextDecoder("utf-8").decode(key)).split('.').pop() + ";base64," +  arrayBufferToBase64(value.buf) + "' type='video/" + (new TextDecoder("utf-8").decode(key)).split('.').pop() + "'></video>";
-          break;
-        }
-        inc++;
+          var fileNo = '<div class="file-no">' + inc + '</div>';
+          var fileContent = '<div class="file-content">' + htmlContent + '</div>';
+          var fileName = '<div class="file-name">' + (new TextDecoder("utf-8").decode(key)) + '</div>';
+          var fileThird = '<div class="file-name">' + (new TextDecoder("utf-8").decode(key)).split('.').pop() + '</div>';
 
-        var fileNo = '<div class="file-no">' + inc + '</div>';
-        var fileContent = '<div class="file-content">' + htmlContent + '</div>';
-        var fileName = '<div class="file-name">' + (new TextDecoder("utf-8").decode(key)) + '</div>';
-        var fileThird = '<div class="file-name">' + (new TextDecoder("utf-8").decode(key)).split('.').pop() + '</div>';
-
-        $('#fileshow').append('<div class="col-md-4">' + fileNo + fileContent + fileName + '</div>');
-      });
+          $('#fileshow').append('<div class="col-md-4">' + fileNo + fileContent + fileName + '</div>');
+        })
+      )
+    )
+    .catch((err) => {
+      console.err(err);
     });
-  },
-  (err) => {
-    console.err(err);
-  });
 }
 
 function arrayBufferToBase64(buffer) {
@@ -226,49 +248,80 @@ function uintToString(uintArray) {
   return new TextDecoder("utf-8").decode(uintArray);
 }
 
-function getMessages() {
-  window.safeCrypto.sha3Hash(auth, 'BabbySAFEapi')
-    .then((hash) => window.safeMutableData.newPublic(auth, hash, 54321)
-      .then((mdHandle) => window.safeMutableData.getEntries(mdHandle)
-          .then((entriesHandle) => {
-            messages.innerHTML = "";
-            var date = new Date();
-            var time = date.getTime();
-            window.safeMutableDataEntries.forEach(entriesHandle, (key, value) => {
+// function getMessages() {
+//   window.safeCrypto.sha3Hash(auth, 'BabbySAFEapi')
+//     .then((hash) => window.safeMutableData.newPublic(auth, hash, 54321)
+//       .then((mdHandle) => window.safeMutableData.getEntries(mdHandle)
+//           .then((entriesHandle) => {
+//             messages.innerHTML = "";
+//             var date = new Date();
+//             var time = date.getTime();
+//             window.safeMutableDataEntries.forEach(entriesHandle, (key, value) => {
 
-              if (uintToString(value.buf).length < 300 &&
-                uintToString(value.buf) !== "" &&
-                parseInt(uintToString(key)) < time &&
-                parseInt(uintToString(key)).toString().length === 13 &&
-                uintToString(key).length === 13) {
-                console.log('Key: ', uintToString(key));
-                console.log('Value: ', uintToString(value.buf));
-                $("#messages").append('<li>' + uintToString(value.buf) + '</li>');
-              }
-              window.scrollTo(0, document.body.scrollHeight);
-            });
-            window.safeMutableDataEntries.free(entriesHandle);
-            window.safeMutableData.free(mdHandle);
-          }
-      ))
-    )
-}
+//               if (uintToString(value.buf).length < 300 &&
+//                 uintToString(value.buf) !== "" &&
+//                 parseInt(uintToString(key)) < time &&
+//                 parseInt(uintToString(key)).toString().length === 13 &&
+//                 uintToString(key).length === 13) {
+//                 console.log('Key: ', uintToString(key));
+//                 console.log('Value: ', uintToString(value.buf));
+//                 $("#messages").append('<li>' + uintToString(value.buf) + '</li>');
+//               }
+//               window.scrollTo(0, document.body.scrollHeight);
+//             });
+//             window.safeMutableDataEntries.free(entriesHandle);
+//             window.safeMutableData.free(mdHandle);
+//           }
+//       ))
+//     )
+// }
+
+// function sendMessage() {
+//   window.safeCrypto.sha3Hash(auth, 'BabbySAFEapi')
+//     .then((hash) => window.safeMutableData.newPublic(auth, hash, 54321))
+//     .then((mdHandle) => {
+//       var date = new Date();
+//       var time = date.getTime();
+//       window.safeMutableData.newMutation(auth).then(mutationHandle => {
+//         window.safeMutableDataMutation.insert(mutationHandle, time.toString(), textarea.value)
+//           .then(_ => window.safeMutableData.applyEntriesMutation(mdHandle, mutationHandle))
+//           .then(_ => {
+//             console.log('New entry was inserted in the MutableData and committed to the network');
+//             window.safeMutableDataMutation.free(mutationHandle);
+//             getMessages();
+//           });
+//         textarea.value = "";
+//       });
+//     });
+// }
+
+// function sendMessage() {
+//   window.safeMutableData.newMutation(auth).then((mutationHandle) => {
+//     var date = new Date();
+//     var time = date.getTime();
+//     window.safeMutableDataMutation.insert(mutationHandle, time.toString(), textarea.value)
+//       .then(_ =>
+//         window.safeMutableData.applyEntriesMutation(mdHandle, mutationHandle))
+//       .then(_ => {
+//         console.log('Message has been sent to the network');
+//         window.safeMutableDataMutation.free(mutationHandle);
+//         getMessages();
+//       });
+//     textarea.value = "";
+//   });
+// }
 
 function sendMessage() {
   window.safeCrypto.sha3Hash(auth, 'BabbySAFEapi')
     .then((hash) => window.safeMutableData.newPublic(auth, hash, 54321))
-    .then((mdHandle) => {
-      var date = new Date();
-      var time = date.getTime();
-      window.safeMutableData.newMutation(auth).then(mutationHandle => {
-        window.safeMutableDataMutation.insert(mutationHandle, time.toString(), textarea.value)
-          .then(_ => window.safeMutableData.applyEntriesMutation(mdHandle, mutationHandle))
-          .then(_ => {
-            console.log('New entry was inserted in the MutableData and committed to the network');
-            window.safeMutableDataMutation.free(mutationHandle);
-            getMessages();
-          });
-        textarea.value = "";
-      });
-    });
+    .then((mdHandle) => window.safeMutableData.newMutation(auth).then((mutationHandle) => {
+      var time = new Date().getTime().toString();
+      window.safeMutableDataMutation.insert(mutationHandle, time, textarea.value)
+        .then(_ => window.safeMutableData.applyEntriesMutation(mutationHandle))
+        .then(_ => console.log('Message has been sent to the network'))
+        .then(_ => window.safeMutableDataMutation.free(mutationHandle))
+        .then(_ => window.safeMutableData.free(mutationHandle));
+      textarea.value = '';
+      // getMessages();
+    }));
 }

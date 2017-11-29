@@ -15,11 +15,7 @@
           <h3>Authorize</h3>
           <div class="button__auth mb-2">
             <button id="authorise" type="button" class="btn btn-success btn-block">Authorise</button>
-          </div>
-          <div class="button__auth mb-2">
             <button id="istokenvalid" type="button" class="btn btn-info btn-block">Check authentication</button>
-          </div>
-          <div class="button__auth mb-2">
             <button id="freetoken" type="button" class="btn btn-danger btn-block">Remove token</button>
           </div>
           <div id="authorise-status" class="alert alert-warning" role="alert">Not Authorise</div>
@@ -41,18 +37,30 @@
     <div class="row">
       <div class="col-md-6">
         <div class="apps-box">
-          <h3>Upload Files</h3>
+          <h3>Uploading Files</h3>
           <h4>Upload Public Files</h4>
           <div class="form-group">
-            <input id="file" type="file" class="form-control-file" name="safetest" formenctype="multipart/form-data" accept="file_extension">
+            <input id="file" type="file" class="form-control-file" name="file" formenctype="multipart/form-data" accept="file_extension">
             <button id="uploadfile" class="btn btn-primary">Upload File</button>
           </div>
+          <hr>
+          <h4>Upload Text</h4>
+          <div class="form-group">
+            <input id="text" type="text" class="form-control-file" name="text">
+            <button id="uploadtext" class="btn btn-primary">Upload Text</button>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="apps-box">
+          <h3>Display Uploaded Files</h3>
+          <p>Displays Images, Video, Audio, Text Strings and Documents</p>
+          <button id="showfile" class="btn btn-primary">Display Files</button>
           <div id="fileshow" class="row fileshow"></div>
         </div>
       </div>
     </div>
   </div>
-
   <script src="jquery.min.js"></script>
   <script src="application.js"></script>
 </body>
